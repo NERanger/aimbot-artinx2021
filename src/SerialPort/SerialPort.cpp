@@ -1,4 +1,5 @@
 #include "SerialPort/SerialPort.hpp"
+#include "PacketManager/Time.hpp"
 
 // Linux file control
 #include <fcntl.h>
@@ -11,6 +12,9 @@
 
 using namespace RmAimbot;
 using namespace SerialPortEnum;
+namespace{
+    uint32_t last_send_time = -1.0;
+}
 
 SerialPort::SerialPort():_baudrate(BR_NULL),
                          _dev_path("")
@@ -40,7 +44,8 @@ bool SerialPort::OpenPort()
         return false;
     }
 
-    _serial_fd =  open(_dev_path.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
+    // _serial_fd =  open(_dev_path.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
+    _serial_fd =  open(_dev_path.c_str(), O_RDWR | O_NOCTTY);
     if(!IsOpened())
     {
         std::cerr << "[SerialPort]Error opening serial port. Errno: " << errno << std::endl;
@@ -131,5 +136,25 @@ int SerialPort::Read(uint8_t* buffer, size_t buffer_size)
 
 int SerialPort::Write(uint8_t* buffer, size_t buffer_size)
 {
-    return write(_serial_fd, buffer, buffer_size);
+    // return write(_serial_fd, buffer, buffer_size);
+    if(last_send_time < 0.0f){
+        last_send_time = Time::GetTick();
+    }else{
+        std::cout << "Time span(ms): " << Time::GetTick() - last_send_time;
+        last_send_time = Time::GetTick();
+    }
+    int len = 0;
+    Flush();
+    len = write(_serial_fd, buffer, buffer_size);
+    // tcdrain(_serial_fd);
+    if (len == buffer_size ){
+        // printf("send data is %s\n",send_buf);
+        return len;
+    }
+    else{
+        std::cout << "Send data: "
+                  << len << std::endl;
+        tcflush(_serial_fd,TCOFLUSH);
+        return len;
+    }
 }

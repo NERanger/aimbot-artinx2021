@@ -32,6 +32,7 @@ public:
     float cmd_pitch;
     uint8_t cmd_fire;
     uint8_t is_found;
+    uint16_t seq;
 
     virtual void Init(uint8_t _id)
     {
@@ -41,6 +42,25 @@ public:
         cmd_pitch = 0.0f;
         cmd_fire = 0;
         is_found = 0;
+        seq = 0;
+    }
+
+    virtual void OnPacketReceived();
+    virtual void SendPacket();
+    template<typename Stream> void SerializePacket(Stream &stream);
+};
+
+class EchoPacket : public HostPacket
+{
+public:
+	EchoPacket(){}
+    uint16_t seq;
+
+    virtual void Init(uint8_t _id)
+    {
+        HostPacket::Init(_id);
+
+        seq = 0;
     }
 
     virtual void OnPacketReceived();
@@ -73,6 +93,7 @@ private:
     StreamChannel m_StreamChannel;
 
     TestHostPacket m_testPacket;
+    EchoPacket m_echoPacket;
     CameraSwitchHostPacket m_cameraSwitchPacket;
     SerialPort m_serialPort;
     uint8_t m_readBuffer[2048];
@@ -82,6 +103,11 @@ protected:
 
 public:
     HostPacketManager();
+
+    EchoPacket& GetEchoPacket()
+    {
+        return m_echoPacket;
+    }
 
     TestHostPacket& GetTestPacket()
     {

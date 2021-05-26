@@ -30,7 +30,7 @@ void TestHostPacket::SendPacket()
 template<typename Stream>
 void TestHostPacket::SerializePacket(Stream &stream)
 {
-    m_DataLen = 10;
+    m_DataLen = 12;
 
     SerializeHeader(stream);
 
@@ -38,6 +38,32 @@ void TestHostPacket::SerializePacket(Stream &stream)
     stream.SerializeFloat(cmd_pitch);
     stream.SerializeU8(cmd_fire);
     stream.SerializeU8(is_found);
+    stream.SerializeU16(seq);
+
+    SerializeCrc16(stream);
+}
+
+void EchoPacket::OnPacketReceived()
+{
+    SerializePacket(m_InputStream);
+    // NotifyAll((void*)&m_testData);
+}
+
+void EchoPacket::SendPacket()
+{
+    SerializePacket(m_OutputStream);
+
+    HostPacket::SendPacket();
+}
+
+template<typename Stream>
+void EchoPacket::SerializePacket(Stream &stream)
+{
+    m_DataLen = 2;
+
+    SerializeHeader(stream);
+
+    stream.SerializeU16(seq);
 
     SerializeCrc16(stream);
 }
@@ -87,6 +113,7 @@ void HostPacketManager::Init(std::string const &_dev_path, SerialPortEnum::BaudR
 
     PacketManager::Init();
 
+    m_echoPacket.Init(0x06);
     m_testPacket.Init(0x05);
     m_cameraSwitchPacket.Init(0x08);
 }

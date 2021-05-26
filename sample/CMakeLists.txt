@@ -29,3 +29,15 @@ target_link_libraries(
         serial_packet_manager
         ${OpenCV_LIBS} 
 )
+
+add_executable(
+    sys_all_test
+        SysAllTest.cc   
+)
+
+target_link_libraries(
+    sys_all_test
+        serial_packet_manager
+        gxcamera
+        aimbot
+)
