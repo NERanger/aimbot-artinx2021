@@ -1,1 +1,2 @@
 add_subdirectory(GxCamera)
+add_subdirectory(Aimbot)
