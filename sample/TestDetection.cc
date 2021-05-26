@@ -168,7 +168,9 @@ int main(int argc, char const *argv[]){
 #endif
 
     } while (!stop_flag);
-        
+    
+    cam.CameraStreamOff();
+    cam.CameraClose();
 
     return EXIT_SUCCESS;
 }

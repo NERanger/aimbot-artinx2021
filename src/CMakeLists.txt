@@ -1,2 +1,4 @@
 add_subdirectory(GxCamera)
 add_subdirectory(Aimbot)
+add_subdirectory(SerialPort)
+add_subdirectory(PacketManager)

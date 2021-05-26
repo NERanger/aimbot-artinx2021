@@ -18,3 +18,14 @@ target_link_libraries(
         gxcamera
         aimbot
 )
+
+add_executable(
+    serial_test
+        SerialTest.cc
+)
+
+target_link_libraries(
+    serial_test
+        serial_packet_manager
+        ${OpenCV_LIBS} 
+)
