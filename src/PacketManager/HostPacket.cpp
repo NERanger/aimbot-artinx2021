@@ -147,6 +147,8 @@ void HostPacketManager::Update()
 
 bool HostPacketManager::FlushSendBufferLow()
 {
+    m_serialPort.flushOutput();
+    // m_serialPort.flush();
     m_serialPort.write(m_SendBuffer, m_SendBufferLength);
     // std::cout << (int)m_SendBuffer[0] << std::endl;
 

@@ -38,20 +38,20 @@ int main(int, char**){
             is_quitting = true;
             break;
         case 'w':
-            target_yaw += 0.01f;
-            // target_pitch += 0.01f;
+            // target_yaw += 0.01f;
+            target_pitch += 0.01f;
             break;
         case 'e':
-            target_yaw -= 0.01f;
-            // target_pitch -= 0.01f;
+            // target_yaw -= 0.01f;
+            target_pitch -= 0.01f;
             break;
         case 'r':
-            target_yaw = 0.0f;
-            // target_pitch = 0.0f;
+            // target_yaw = 0.0f;
+            target_pitch = 0.0f;
             break;
         case 'f':
-            target_yaw = -target_yaw;
-            // target_pitch = -target_pitch;
+            // target_yaw = -target_yaw;
+            target_pitch = -target_pitch;
             break;
         case 't':
             if_send = !if_send;

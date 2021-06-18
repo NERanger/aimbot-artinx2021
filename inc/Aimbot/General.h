@@ -11,7 +11,7 @@
 #include<iostream>
 #include<math.h>
 
-#define DEBUG
+// #define DEBUG_MODE
 #define RELEASE_MODE
 
 using namespace cv;

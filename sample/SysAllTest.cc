@@ -13,16 +13,34 @@
 
 #include "GxCamera/GxCamera.hpp"
 
+#include "ThreadSafe/ThreadSafeQueue.hpp"
+#include <thread>
+
 using GxCamera::Camera;
 using GxCamera::CameraParam;
 
 using RmAimbot::HostPacketManager;
 
+using ThreadSafe::ThreadSafeQueue;
+
+struct SerialData{
+    float yaw_cmd = 0.0f;
+    float pitch_cmd = 0.0f;
+    uint8_t if_fire = 0;
+    uint8_t is_found = 0;
+    uint16_t seq = 0;
+};
+
+
 namespace{
-    Color enemy_color = RED;
+    Color enemy_color = BLUE;
     int target_num = 2;
     bool stop_flag = false;
+
+    ThreadSafeQueue<SerialData> data_queue;
 }
+
+void SerialSendThread();
 
 void SigintHandler(int sig) {
     stop_flag = true;
@@ -30,12 +48,6 @@ void SigintHandler(int sig) {
 }
 
 int main(int argc, char const *argv[]){
-    // Init serial communication
-    HostPacketManager& host_packet_manager = *HostPacketManager::Instance();
-    // host_packet_manager.Init("/dev/ttyUSB0", RmAimbot::SerialPortEnum::BR_921600);
-    host_packet_manager.Init("/dev/ttyUSB0", 921600);
-    Time::Init(1);
-
     // Set camera parameters
     CameraParam cam_param;
     // Serial number
@@ -84,25 +96,58 @@ int main(int argc, char const *argv[]){
     angleSolver.setArmorSize(BIG_ARMOR,230,127);
     angleSolver.setBulletSpeed(15000);
 
-    double timer_start,timer_span;
-    do{
-        // Update 
-        host_packet_manager.Update();
+    // Prepare serial send thread
+    std::thread serial_send_thread(SerialSendThread);
 
-        timer_start = getTickCount();
+    double timer_start,timer_span;
+    char key_pressed = 0;
+
+    signal(SIGINT, SigintHandler);
+    
+    do{
+        SerialData data;
+
+        // cv::namedWindow("Input window", cv::WINDOW_KEEPRATIO);
+        // key_pressed = cv::waitKey(15);
+        // switch (key_pressed)
+        // {
+        // case 'z':
+        //     data.seq = 440.0f * (float)pow(2, (float)1/(float)12);
+        //     break;
+        // case 'x':
+        //     data.seq = 440.0f * (float)pow(2, (float)2/(float)12);
+        //     break;
+        // case 'c':
+        //     data.seq = 440.0f * (float)pow(2, (float)3/(float)12);
+        //     break; 
+        // case 'v':
+        //     data.seq = 440.0f * (float)pow(2, (float)4/(float)12);
+        //     break; 
+        // case 'b':
+        //     data.seq = 440.0f * (float)pow(2, (float)5/(float)12);
+        //     break;
+        // case 'n':
+        //     data.seq = 440.0f * (float)pow(2, (float)6/(float)12);
+        //     break; 
+        // default:
+        //     break;
+        // }
+
+        double yaw=0,pitch=0,distance=0;
+
+        // timer_start = getTickCount();
 
         detector.setEnemyColor(enemy_color); //here set enemy color
 
         // Acquire image
         Mat img;
         cam.GetLatestColorImg(img);
-        cvtColor(img, img, cv::COLOR_RGB2BGR);
+        cv::cvtColor(img, img, cv::COLOR_RGB2BGR);
 
         // Pass to detector
         detector.setImg(img);
         detector.run(img);
 
-        double yaw=0,pitch=0,distance=0;
         Point2f centerPoint;
         if(detector.isFoundArmor()){
             vector<Point2f> contourPoints;
@@ -111,31 +156,27 @@ int main(int argc, char const *argv[]){
             angleSolver.getAngle(contourPoints,centerPoint,SMALL_ARMOR,yaw,pitch,distance);
         }
 
-        host_packet_manager.GetTestPacket().cmd_yaw = (float)yaw;
-        host_packet_manager.GetTestPacket().cmd_pitch = (float)pitch;
-        host_packet_manager.GetTestPacket().cmd_fire = 1;
-        host_packet_manager.GetTestPacket().is_found = detector.isFoundArmor();
-        host_packet_manager.GetTestPacket().seq++;
+        data.yaw_cmd = (float)yaw;
+        data.pitch_cmd = (float)pitch;
+        data.if_fire = 1;
+        data.is_found = 1;
 
-        host_packet_manager.GetTestPacket().SendPacket();
+        data_queue.Push(data);
 
         //串口在此获取信息 yaw pitch distance，同时设定目标装甲板数字
         // Serial(yaw,pitch,true,detector.isFoundArmor());
         //操作手用，实时设置目标装甲板数字
         // detector.setTargetNum(targetNum);
 
-        unsigned int diff = host_packet_manager.GetTestPacket().seq - host_packet_manager.GetEchoPacket().seq;
-        std::cout << "DIFF: " << diff << std::endl;  
+        // timer_span=(getTickCount()-timer_start)/getTickFrequency();
+        // printf("Armor Detecting FPS: %f\n",1/timer_span);
+        // if(detector.isFoundArmor()){
+        //     // printf("Found Target! Center(%d,%d)\n",centerPoint.x,centerPoint.y);
+        //     // cout << "Yaw: " << yaw << "Pitch: " << pitch 
+        //     //      << "Distance: " << distance <<endl;
+        // }
 
-        timer_span=(getTickCount()-timer_start)/getTickFrequency();
-        printf("Armor Detecting FPS: %f\n",1/timer_span);
-        if(detector.isFoundArmor()){
-            // printf("Found Target! Center(%d,%d)\n",centerPoint.x,centerPoint.y);
-            // cout << "Yaw: " << yaw << "Pitch: " << pitch 
-            //      << "Distance: " << distance <<endl;
-        }
-
-#ifdef DEBUG
+#ifdef DEBUG_MODE
         //********************** DEGUG **********************//
         //装甲板检测识别调试参数是否输出
         //param:
@@ -195,8 +236,44 @@ int main(int argc, char const *argv[]){
 
     } while (!stop_flag);
     
+    serial_send_thread.join();
+
     cam.CameraStreamOff();
     cam.CameraClose();
 
     return EXIT_SUCCESS;
+}
+
+void SerialSendThread(){
+    // Init serial communication
+    HostPacketManager& host_packet_manager = *HostPacketManager::Instance();
+    // host_packet_manager.Init("/dev/ttyUSB0", RmAimbot::SerialPortEnum::BR_921600);
+    host_packet_manager.Init("/dev/ttyUSB0", 921600);
+    Time::Init(1);
+
+    while (!stop_flag){
+        SerialData data;
+        data_queue.WaitAndPop(data);
+
+        host_packet_manager.GetTestPacket().cmd_yaw = data.yaw_cmd;
+        host_packet_manager.GetTestPacket().cmd_pitch = data.pitch_cmd;
+        host_packet_manager.GetTestPacket().cmd_fire = data.if_fire;
+        host_packet_manager.GetTestPacket().is_found = data.is_found;
+        // host_packet_manager.GetTestPacket().seq = data.seq;
+        host_packet_manager.GetTestPacket().seq++;
+
+        host_packet_manager.GetTestPacket().SendPacket();
+
+        // Update 
+        host_packet_manager.Update();
+
+        unsigned int diff = host_packet_manager.GetTestPacket().seq - host_packet_manager.GetEchoPacket().seq;
+        std::cout << "[DEBUG INFO]" << std::endl
+                  << "-- Send seq: " << host_packet_manager.GetTestPacket().seq << std::endl
+                  << "-- Recv seq: " << host_packet_manager.GetEchoPacket().seq << std::endl
+                  << "-- DIFF: " << diff << std::endl
+                  << "-- YAW: " << data.yaw_cmd << std::endl
+                  << "-- PITCH: " << data.pitch_cmd << std::endl;
+    }
+    
 }
