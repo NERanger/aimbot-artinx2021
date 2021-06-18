@@ -1,7 +1,8 @@
 #pragma once
 
 #include "PacketManager/Packet.hpp"
-#include "SerialPort/SerialPort.hpp"
+// #include "SerialPort/SerialPort.hpp"
+#include <serial/serial.h>
 
 #include <string>
 
@@ -95,7 +96,8 @@ private:
     TestHostPacket m_testPacket;
     EchoPacket m_echoPacket;
     CameraSwitchHostPacket m_cameraSwitchPacket;
-    SerialPort m_serialPort;
+    // SerialPort m_serialPort;
+    serial::Serial m_serialPort;
     uint8_t m_readBuffer[2048];
 
 protected:
@@ -119,12 +121,13 @@ public:
         return m_cameraSwitchPacket;
     }
 
-    SerialPort& GetSerialPort()
+    serial::Serial& GetSerialPort()
     {
         return m_serialPort;
     }
 
-    virtual void Init(std::string const &_dev_path, SerialPortEnum::BaudRate _bandrate);
+    // virtual void Init(std::string const &_dev_path, SerialPortEnum::BaudRate _bandrate);
+    virtual void Init(std::string const &_dev_path, uint32_t _bandrate);
     virtual void Update();
 
     static HostPacketManager* Instance()

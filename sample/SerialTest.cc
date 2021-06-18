@@ -13,11 +13,13 @@ namespace{
     float target_yaw = 0.0f;
     float target_pitch = 0.0f;
     bool if_send = false;
+
+    int max_diff = -1;
 }
 
 int main(int, char**){
     HostPacketManager& host_packet_manager = *HostPacketManager::Instance();
-    host_packet_manager.Init("/dev/ttyUSB0", RmAimbot::SerialPortEnum::BR_921600);
+    host_packet_manager.Init("/dev/ttyUSB0", 115200);
     Time::Init(1);
 
     char key_pressed = 0;
@@ -29,7 +31,7 @@ int main(int, char**){
 
         // std::cout << "Received " << host_packet_manager.GetTestPacket().m_testData << std::endl;
         cv::namedWindow("Input window", cv::WINDOW_KEEPRATIO);
-        key_pressed = cv::waitKey(10);
+        key_pressed = cv::waitKey(1);
         switch (key_pressed)
         {
         case 'q':
@@ -53,6 +55,24 @@ int main(int, char**){
             break;
         case 't':
             if_send = !if_send;
+            break;
+        case 'z':
+            host_packet_manager.GetTestPacket().seq = 440.0f * (float)pow(2, (float)1/(float)12);
+            break;
+        case 'x':
+            host_packet_manager.GetTestPacket().seq = 440.0f * (float)pow(2, (float)2/(float)12);
+            break;
+        case 'c':
+            host_packet_manager.GetTestPacket().seq = 440.0f * (float)pow(2, (float)3/(float)12);
+            break; 
+        case 'v':
+            host_packet_manager.GetTestPacket().seq = 440.0f * (float)pow(2, (float)4/(float)12);
+            break; 
+        case 'b':
+            host_packet_manager.GetTestPacket().seq = 440.0f * (float)pow(2, (float)5/(float)12);
+            break;
+        case 'n':
+            host_packet_manager.GetTestPacket().seq = 440.0f * (float)pow(2, (float)6/(float)12);
             break; 
         default:
             break;
@@ -70,11 +90,20 @@ int main(int, char**){
         }
         host_packet_manager.GetTestPacket().cmd_fire = 1;
         host_packet_manager.GetTestPacket().is_found = 1;
-        host_packet_manager.GetTestPacket().seq++;
+        // host_packet_manager.GetTestPacket().seq++;
         host_packet_manager.GetTestPacket().SendPacket();
 
-        unsigned int diff = host_packet_manager.GetTestPacket().seq - host_packet_manager.GetEchoPacket().seq;
-        std::cout << "DIFF: " << diff << std::endl;
+        int diff = host_packet_manager.GetTestPacket().seq - host_packet_manager.GetEchoPacket().seq;
+
+        if(diff > max_diff){
+            max_diff = diff;
+        }
+
+        std::cout << "[DEBUG INFO]" << std::endl
+                  << "-- Send seq: " << host_packet_manager.GetTestPacket().seq << std::endl
+                  << "-- Recv seq: " << host_packet_manager.GetEchoPacket().seq << std::endl
+                  << "-- DIFF: " << diff << std::endl
+                  << "-- MAX DIFF: " << max_diff << std::endl;
 
         key_pressed = 0;
     }

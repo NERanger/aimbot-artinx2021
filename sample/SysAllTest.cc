@@ -32,7 +32,8 @@ void SigintHandler(int sig) {
 int main(int argc, char const *argv[]){
     // Init serial communication
     HostPacketManager& host_packet_manager = *HostPacketManager::Instance();
-    host_packet_manager.Init("/dev/ttyUSB0", RmAimbot::SerialPortEnum::BR_921600);
+    // host_packet_manager.Init("/dev/ttyUSB0", RmAimbot::SerialPortEnum::BR_921600);
+    host_packet_manager.Init("/dev/ttyUSB0", 921600);
     Time::Init(1);
 
     // Set camera parameters

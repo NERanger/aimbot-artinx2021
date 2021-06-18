@@ -104,12 +104,27 @@ HostPacketManager::HostPacketManager() : PacketManager(1)
     m_pChannel = &m_StreamChannel;
 }
 
-void HostPacketManager::Init(std::string const &_dev_path, SerialPortEnum::BaudRate _bandrate)
+void HostPacketManager::Init(std::string const &_dev_path, uint32_t _bandrate)
 {
-    m_serialPort.SetDevPath(_dev_path);
-    m_serialPort.SetBaudRate(_bandrate);
+    // m_serialPort.SetDevPath(_dev_path);
+    // m_serialPort.SetBaudRate(_bandrate);
 
-    m_serialPort.OpenPort();
+    m_serialPort.setPort(_dev_path);
+    m_serialPort.setBaudrate(_bandrate);
+    m_serialPort.setBytesize(serial::eightbits);
+    m_serialPort.setParity(serial::parity_none);
+    m_serialPort.setStopbits(serial::stopbits_one);
+    m_serialPort.setFlowcontrol(serial::flowcontrol_none);
+
+    serial::Timeout serialTimeOut = serial::Timeout::simpleTimeout(0); 
+    m_serialPort.setTimeout(serialTimeOut);
+
+    // m_serialPort.OpenPort();
+    try{
+        m_serialPort.open();
+    }catch(serial::IOException& e){
+        std::cerr << "[Serial] Fail to open serial port" << std::endl;
+    }
 
     PacketManager::Init();
 
@@ -120,8 +135,10 @@ void HostPacketManager::Init(std::string const &_dev_path, SerialPortEnum::BaudR
 
 void HostPacketManager::Update()
 {
-    int _readBytes = m_serialPort.Read(m_readBuffer, sizeof(m_readBuffer));
+    int _readBytes = m_serialPort.read(m_readBuffer, sizeof(m_readBuffer));
     Enqueue(0, m_readBuffer, _readBytes);
+
+    // std::cout << "[RE] " << _readBytes << std::endl;
 
     PacketManager::Update();
 
@@ -130,7 +147,7 @@ void HostPacketManager::Update()
 
 bool HostPacketManager::FlushSendBufferLow()
 {
-    m_serialPort.Write(m_SendBuffer, m_SendBufferLength);
+    m_serialPort.write(m_SendBuffer, m_SendBufferLength);
     // std::cout << (int)m_SendBuffer[0] << std::endl;
 
     return true;
