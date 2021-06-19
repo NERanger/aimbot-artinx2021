@@ -54,7 +54,7 @@ GX_STATUS Camera::CameraInit(const CameraParam &params){
         return emStatus;
     }
 
-    emStatus = this->SetWorkingProperties();
+    emStatus = this->SetWorkingProperties(params);
     if(emStatus != GX_STATUS_SUCCESS){
         cerr << "[GxCamera] Set working properties fail" << endl;
         return emStatus;
@@ -521,7 +521,7 @@ GX_STATUS Camera::SetWorkingProperties(const CameraParam &params){
             if(emStatus != GX_STATUS_SUCCESS){
                 throw GxException(emStatus);
             }
-            emStatus = GXSetEnum(this->device_handle_, GX_FLOAT_AUTO_EXPOSURE_TIME_MIN, params.auto_exposure_min);
+            emStatus = GXSetFloat(this->device_handle_, GX_FLOAT_AUTO_EXPOSURE_TIME_MIN, params.auto_exposure_min);
             if(emStatus != GX_STATUS_SUCCESS){
                 throw GxException(emStatus);
             }
