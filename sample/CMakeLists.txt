@@ -40,4 +40,5 @@ target_link_libraries(
         serial_packet_manager
         gxcamera
         aimbot
+        utils
 )

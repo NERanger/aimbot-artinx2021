@@ -1,5 +1,7 @@
 #include "PacketManager/HostPacket.hpp"
 #include <iostream>
+#include <thread>
+#include <boost/shared_array.hpp>
 
 using namespace RmAimbot;
 
@@ -104,38 +106,24 @@ HostPacketManager::HostPacketManager() : PacketManager(1)
     m_pChannel = &m_StreamChannel;
 }
 
-void HostPacketManager::Init(std::string const &_dev_path, LibSerial::BaudRate _bandrate)
+void HostPacketManager::Init(std::string const &_dev_path, unsigned int _bandrate)
 {
     // m_serialPort.SetDevPath(_dev_path);
     // m_serialPort.SetBaudRate(_bandrate);
-    try{
-        m_serialPort.Open(_dev_path);
-    }catch(const LibSerial::OpenFailed){
-        std::cerr << "[Serial] Fail to open serial port" << std::endl;
-    }
-    
-    m_serialPort.SetBaudRate(_bandrate);
-    m_serialPort.SetCharacterSize(LibSerial::CharacterSize::CHAR_SIZE_8);
-    m_serialPort.SetFlowControl(LibSerial::FlowControl::FLOW_CONTROL_NONE);
-    m_serialPort.SetParity(LibSerial::Parity::PARITY_NONE);
-    m_serialPort.SetStopBits(LibSerial::StopBits::STOP_BITS_1);
 
-    // m_serialPort.setPort(_dev_path);
-    // m_serialPort.setBaudrate(_bandrate);
-    // m_serialPort.setBytesize(serial::eightbits);
-    // m_serialPort.setParity(serial::parity_none);
-    // m_serialPort.setStopbits(serial::stopbits_one);
-    // m_serialPort.setFlowcontrol(serial::flowcontrol_none);
-
-    // serial::Timeout serialTimeOut = serial::Timeout::simpleTimeout(0); 
-    // m_serialPort.setTimeout(serialTimeOut);
-
-    // // m_serialPort.OpenPort();
     // try{
-    //     m_serialPort.open();
-    // }catch(serial::IOException& e){
+    //     m_serialPort.Open(_dev_path);
+    // }catch(const LibSerial::OpenFailed){
     //     std::cerr << "[Serial] Fail to open serial port" << std::endl;
     // }
+    
+    // m_serialPort.SetBaudRate(_bandrate);
+    // m_serialPort.SetCharacterSize(LibSerial::CharacterSize::CHAR_SIZE_8);
+    // m_serialPort.SetFlowControl(LibSerial::FlowControl::FLOW_CONTROL_NONE);
+    // m_serialPort.SetParity(LibSerial::Parity::PARITY_NONE);
+    // m_serialPort.SetStopBits(LibSerial::StopBits::STOP_BITS_1);
+
+    m_serialPort = std::make_unique<BufferedAsyncSerial>(_dev_path, _bandrate);
 
     PacketManager::Init();
 
@@ -146,23 +134,21 @@ void HostPacketManager::Init(std::string const &_dev_path, LibSerial::BaudRate _
 
 void HostPacketManager::Update()
 {
-    LibSerial::DataBuffer buf;
+    // LibSerial::DataBuffer buf;
 
-    // int _readBytes = m_serialPort.Read(m_readBuffer, sizeof(m_readBuffer));
-    try{
-        m_serialPort.Read(buf, 10, 5);
-    }catch(const LibSerial::ReadTimeout){
-        std::cout << "[RE] Timeout" << std::endl;
-    }
+    int _readBytes = m_serialPort->read((char *)m_readBuffer, sizeof(m_readBuffer));
+    // try{
+    //     m_serialPort.Read(buf, 10, 5);
+    // }catch(const LibSerial::ReadTimeout){
+    //     std::cout << "[RE] Timeout" << std::endl;
+    // }
 
-    for(size_t i = 0; i < buf.size(); ++i){
-        m_readBuffer[i] = buf[i];
-    }
+    // for(size_t i = 0; i < buf.size(); ++i){
+    //     m_readBuffer[i] = buf[i];
+    // }
+    Enqueue(0, m_readBuffer, _readBytes);
 
-    Enqueue(0, m_readBuffer, buf.size());
-    // Enqueue(0, m_readBuffer, _readBytes);
-
-    std::cout << "[RE] " << buf.size() << std::endl;
+    // std::cout << "[RE] " << _readBytes << std::endl;
 
     PacketManager::Update();
 
@@ -173,12 +159,16 @@ bool HostPacketManager::FlushSendBufferLow()
 {
     // m_serialPort.flushOutput();
     // m_serialPort.flush();
-    LibSerial::DataBuffer buf(m_SendBufferLength);
-    for(size_t i = 0; i < m_SendBufferLength; ++i){
-        buf.push_back(m_SendBuffer[i]);
-    }
+    // LibSerial::DataBuffer buf(m_SendBufferLength);
+    // for(size_t i = 0; i < m_SendBufferLength; ++i){
+    //     buf.push_back(m_SendBuffer[i]);
+    // }
 
-    m_serialPort.Write(buf);
+    // std::shared_ptr<AsyncSerialImpl> impl_ptr = m_serialPort->GetImpl();
+    // ::tcflush(impl_ptr->port.lowest_layer().native_handle(), TCOFLUSH);
+    
+
+    m_serialPort->write((char *)m_SendBuffer, m_SendBufferLength);
     // m_serialPort.Write(m_SendBuffer, m_SendBufferLength);
     // std::cout << (int)m_SendBuffer[0] << std::endl;
 

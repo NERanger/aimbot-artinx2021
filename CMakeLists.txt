@@ -14,19 +14,22 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O0")
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
+# add_definitions(-DBOOST_ERROR_CODE_HEADER_ONLY)
+
 # set(OpenCV_DIR /home/artinx001/3rdparty/opencv-3.4.12/build)
 find_package(OpenCV REQUIRED)
 find_package(Threads REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
 
 # Install libserial with
 # sudo apt install libserial-dev
-find_package(PkgConfig)
-pkg_check_modules(SERIAL libserial)
+# find_package(PkgConfig)
+# pkg_check_modules(SERIAL libserial)
 # find_package(SERIAL REQUIRED)
 
 include_directories(
     ${OpenCV_INCLUDE_DIRS}
-    ${SERIAL_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
     ${PROJECT_SOURCE_DIR}/inc
 )
 

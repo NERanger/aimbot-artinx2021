@@ -2,8 +2,9 @@
 
 #include "PacketManager/Packet.hpp"
 // #include "SerialPort/SerialPort.hpp"
-#include <libserial/SerialPort.h>
-#include <libserial/SerialStream.h>
+// #include <libserial/SerialPort.h>
+// #include <libserial/SerialStream.h>
+#include "AsyncSerial/BufferedAsyncSerial.h"
 
 #include <string>
 
@@ -98,7 +99,7 @@ private:
     EchoPacket m_echoPacket;
     CameraSwitchHostPacket m_cameraSwitchPacket;
     // SerialPort m_serialPort;
-    LibSerial::SerialPort m_serialPort;
+    BufferedAsyncSerial::Ptr m_serialPort;
     uint8_t m_readBuffer[2048];
 
 protected:
@@ -122,13 +123,13 @@ public:
         return m_cameraSwitchPacket;
     }
 
-    LibSerial::SerialPort& GetSerialPort()
+    BufferedAsyncSerial::Ptr& GetSerialPort()
     {
         return m_serialPort;
     }
 
     // virtual void Init(std::string const &_dev_path, SerialPortEnum::BaudRate _bandrate);
-    virtual void Init(std::string const &_dev_path, LibSerial::BaudRate _bandrate);
+    virtual void Init(std::string const &_dev_path, unsigned int _bandrate);
     virtual void Update();
 
     static HostPacketManager* Instance()

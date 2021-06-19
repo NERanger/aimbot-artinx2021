@@ -1,20 +1,21 @@
 #include <csignal>
+#include <thread>
+#include <unistd.h>
 
 #include <opencv2/opencv.hpp>
-
-#include <unistd.h>
 
 #include "PacketManager/HostPacket.hpp"
 #include "PacketManager/Time.hpp"
 
-#include"Aimbot/General.h"
-#include"Aimbot/Armor.h"
-#include"Aimbot/AngleSolver.h"
+#include "Aimbot/General.h"
+#include "Aimbot/Armor.h"
+#include "Aimbot/AngleSolver.h"
 
 #include "GxCamera/GxCamera.hpp"
 
 #include "ThreadSafe/ThreadSafeQueue.hpp"
-#include <thread>
+
+#include "utils/Timer.hpp"
 
 using GxCamera::Camera;
 using GxCamera::CameraParam;
@@ -37,9 +38,12 @@ namespace{
     int target_num = 2;
     bool stop_flag = false;
 
-    float tmp_seq;
+    float tmp_seq = 0.0f;
 
-    ThreadSafeQueue<SerialData> data_queue;
+    // Gloable data
+    SerialData serial_data;
+
+    // ThreadSafeQueue<SerialData> data_queue;
 }
 
 void SerialSendThread();
@@ -106,8 +110,9 @@ int main(int argc, char const *argv[]){
 
     signal(SIGINT, SigintHandler);
     
+    Timer tic;
+    
     do{
-        SerialData data;
 
         // cv::namedWindow("Input window", cv::WINDOW_KEEPRATIO);
         // key_pressed = cv::waitKey(1);
@@ -135,9 +140,9 @@ int main(int argc, char const *argv[]){
         //     break;
         // }
 
-        double yaw=0,pitch=0,distance=0;
+        tic.Start();
 
-        // timer_start = getTickCount();
+        double yaw=0,pitch=0,distance=0;
 
         detector.setEnemyColor(enemy_color); //here set enemy color
 
@@ -158,13 +163,20 @@ int main(int argc, char const *argv[]){
             angleSolver.getAngle(contourPoints,centerPoint,SMALL_ARMOR,yaw,pitch,distance);
         }
 
-        data.yaw_cmd = (float)yaw;
-        data.pitch_cmd = (float)pitch;
-        data.if_fire = 1;
-        data.is_found = 1;
-        data.seq = tmp_seq;
+        serial_data.yaw_cmd = (float)yaw;
+        serial_data.pitch_cmd = (float)pitch;
+        serial_data.if_fire = 1;
+        serial_data.is_found = 1;
+        serial_data.seq = tmp_seq;
 
-        data_queue.Push(data);
+        double time_span = tic.Stop();
+
+        // std::cout << "[DEBUG INFO]" << std::endl
+        //           << "-- Time used(ms): " << time_span * 1000 << std::endl
+        //           << "-- Frame rate: " << 1.0f / time_span << std::endl
+        //           << "-- Image size: " << img.cols << "x" << img.rows << std::endl;
+
+        // data_queue.Push(data);
 
         //串口在此获取信息 yaw pitch distance，同时设定目标装甲板数字
         // Serial(yaw,pitch,true,detector.isFoundArmor());
@@ -250,24 +262,23 @@ int main(int argc, char const *argv[]){
 void SerialSendThread(){
     // Init serial communication
     HostPacketManager& host_packet_manager = *HostPacketManager::Instance();
-    // host_packet_manager.Init("/dev/ttyUSB0", RmAimbot::SerialPortEnum::BR_921600);
-    host_packet_manager.Init("/dev/ttyUSB0", LibSerial::BaudRate::BAUD_921600);
+    host_packet_manager.Init("/dev/ttyUSB0", 921600);
     Time::Init(1);
 
     while (!stop_flag){
         // Update 
         host_packet_manager.Update();
 
-        // std::this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(1ms);
 
-        SerialData data;
-        data_queue.WaitAndPop(data);
+        // SerialData data;
+        // data_queue.WaitAndPop(data);
 
-        host_packet_manager.GetTestPacket().cmd_yaw = data.yaw_cmd;
-        host_packet_manager.GetTestPacket().cmd_pitch = data.pitch_cmd;
-        host_packet_manager.GetTestPacket().cmd_fire = data.if_fire;
-        host_packet_manager.GetTestPacket().is_found = data.is_found;
-        // host_packet_manager.GetTestPacket().seq = data.seq;
+        host_packet_manager.GetTestPacket().cmd_yaw = serial_data.yaw_cmd;
+        host_packet_manager.GetTestPacket().cmd_pitch = serial_data.pitch_cmd;
+        host_packet_manager.GetTestPacket().cmd_fire = serial_data.if_fire;
+        host_packet_manager.GetTestPacket().is_found = serial_data.is_found;
+        // host_packet_manager.GetTestPacket().seq = serial_data.seq;
         host_packet_manager.GetTestPacket().seq++;
 
         host_packet_manager.GetTestPacket().SendPacket();
@@ -277,8 +288,8 @@ void SerialSendThread(){
                   << "-- Send seq: " << host_packet_manager.GetTestPacket().seq << std::endl
                   << "-- Recv seq: " << host_packet_manager.GetEchoPacket().seq << std::endl
                   << "-- DIFF: " << diff << std::endl
-                  << "-- YAW: " << data.yaw_cmd << std::endl
-                  << "-- PITCH: " << data.pitch_cmd << std::endl;
+                  << "-- YAW: " << serial_data.yaw_cmd << std::endl
+                  << "-- PITCH: " << serial_data.pitch_cmd << std::endl;
     }
     
 }

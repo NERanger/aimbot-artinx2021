@@ -19,7 +19,7 @@ namespace{
 
 int main(int, char**){
     HostPacketManager& host_packet_manager = *HostPacketManager::Instance();
-    host_packet_manager.Init("/dev/ttyUSB0", LibSerial::BaudRate::BAUD_921600);
+    host_packet_manager.Init("/dev/ttyUSB0", 921600);
     Time::Init(1);
 
     char key_pressed = 0;
@@ -31,7 +31,7 @@ int main(int, char**){
 
         // std::cout << "Received " << host_packet_manager.GetTestPacket().m_testData << std::endl;
         cv::namedWindow("Input window", cv::WINDOW_KEEPRATIO);
-        key_pressed = cv::waitKey(1);
+        key_pressed = cv::waitKey(10);
         switch (key_pressed)
         {
         case 'q':
