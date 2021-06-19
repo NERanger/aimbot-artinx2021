@@ -1,7 +1,5 @@
 #include "PacketManager/HostPacket.hpp"
 #include <iostream>
-#include <thread>
-#include <boost/shared_array.hpp>
 
 using namespace RmAimbot;
 
