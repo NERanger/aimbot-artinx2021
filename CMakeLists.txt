@@ -1,5 +1,5 @@
 project(Galaxy_camera_driver)
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.8)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -9,18 +9,24 @@ endif()
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_RELEASE "-O0")
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 # set(OpenCV_DIR /home/artinx001/3rdparty/opencv-3.4.12/build)
 find_package(OpenCV REQUIRED)
-find_package(serial REQUIRED)
+find_package(Threads REQUIRED)
+
+# Install libserial with
+# sudo apt install libserial-dev
+find_package(PkgConfig)
+pkg_check_modules(SERIAL libserial)
+# find_package(SERIAL REQUIRED)
 
 include_directories(
     ${OpenCV_INCLUDE_DIRS}
-    ${serial_INCLUDE_DIRS}
+    ${SERIAL_INCLUDE_DIRS}
     ${PROJECT_SOURCE_DIR}/inc
 )
 

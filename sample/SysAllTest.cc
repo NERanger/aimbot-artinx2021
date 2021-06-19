@@ -37,6 +37,8 @@ namespace{
     int target_num = 2;
     bool stop_flag = false;
 
+    float tmp_seq;
+
     ThreadSafeQueue<SerialData> data_queue;
 }
 
@@ -88,10 +90,10 @@ int main(int argc, char const *argv[]){
     AngleSolver angleSolver;
 
     //Set armor detector prop
-    detector.loadSVM("/home/artinx-007/JingYL/aimbot2021/config/123svm.xml");
+    detector.loadSVM("./config/123svm.xml");
 
     //Set angle solver prop
-    angleSolver.setCameraParam("/home/artinx-007/JingYL/aimbot2021/config/camera_params.xml", 1);
+    angleSolver.setCameraParam("./config/camera_params.xml", 1);
     angleSolver.setArmorSize(SMALL_ARMOR,135,125);
     angleSolver.setArmorSize(BIG_ARMOR,230,127);
     angleSolver.setBulletSpeed(15000);
@@ -108,26 +110,26 @@ int main(int argc, char const *argv[]){
         SerialData data;
 
         // cv::namedWindow("Input window", cv::WINDOW_KEEPRATIO);
-        // key_pressed = cv::waitKey(15);
+        // key_pressed = cv::waitKey(1);
         // switch (key_pressed)
         // {
         // case 'z':
-        //     data.seq = 440.0f * (float)pow(2, (float)1/(float)12);
+        //     tmp_seq = 440.0f * (float)pow(2, (float)1/(float)12);
         //     break;
         // case 'x':
-        //     data.seq = 440.0f * (float)pow(2, (float)2/(float)12);
+        //     tmp_seq = 440.0f * (float)pow(2, (float)2/(float)12);
         //     break;
         // case 'c':
-        //     data.seq = 440.0f * (float)pow(2, (float)3/(float)12);
+        //     tmp_seq = 440.0f * (float)pow(2, (float)3/(float)12);
         //     break; 
         // case 'v':
-        //     data.seq = 440.0f * (float)pow(2, (float)4/(float)12);
+        //     tmp_seq = 440.0f * (float)pow(2, (float)4/(float)12);
         //     break; 
         // case 'b':
-        //     data.seq = 440.0f * (float)pow(2, (float)5/(float)12);
+        //     tmp_seq = 440.0f * (float)pow(2, (float)5/(float)12);
         //     break;
         // case 'n':
-        //     data.seq = 440.0f * (float)pow(2, (float)6/(float)12);
+        //     tmp_seq = 440.0f * (float)pow(2, (float)6/(float)12);
         //     break; 
         // default:
         //     break;
@@ -160,6 +162,7 @@ int main(int argc, char const *argv[]){
         data.pitch_cmd = (float)pitch;
         data.if_fire = 1;
         data.is_found = 1;
+        data.seq = tmp_seq;
 
         data_queue.Push(data);
 
@@ -248,10 +251,15 @@ void SerialSendThread(){
     // Init serial communication
     HostPacketManager& host_packet_manager = *HostPacketManager::Instance();
     // host_packet_manager.Init("/dev/ttyUSB0", RmAimbot::SerialPortEnum::BR_921600);
-    host_packet_manager.Init("/dev/ttyUSB0", 921600);
+    host_packet_manager.Init("/dev/ttyUSB0", LibSerial::BaudRate::BAUD_921600);
     Time::Init(1);
 
     while (!stop_flag){
+        // Update 
+        host_packet_manager.Update();
+
+        // std::this_thread::sleep_for(1ms);
+
         SerialData data;
         data_queue.WaitAndPop(data);
 
@@ -263,9 +271,6 @@ void SerialSendThread(){
         host_packet_manager.GetTestPacket().seq++;
 
         host_packet_manager.GetTestPacket().SendPacket();
-
-        // Update 
-        host_packet_manager.Update();
 
         unsigned int diff = host_packet_manager.GetTestPacket().seq - host_packet_manager.GetEchoPacket().seq;
         std::cout << "[DEBUG INFO]" << std::endl
