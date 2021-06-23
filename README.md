@@ -32,7 +32,7 @@ After the building process is done, the generated executables will be put in `bi
 
 File tree:
 
-```glsl
+```text
 aimbot-artinx2021/
 |--config/
      |--123svm.xml (Pre-trained SVM for number recognition)
