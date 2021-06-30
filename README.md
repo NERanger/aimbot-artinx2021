@@ -7,6 +7,10 @@ Aimbot implementation for RM2021
 * Armor detection with number recognition
 * Asynchronized serial communication
 
+## Get Started
+
+TODO
+
 ## Prerequisites
 
 * OpenCV (Tested with 3.4.14)
@@ -65,3 +69,6 @@ aimbot-artinx2021/
      |--utils/
 ```
 
+design concept:
+
+TODO
