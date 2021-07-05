@@ -7,11 +7,9 @@ Aimbot implementation for RM2021
 * Armor detection with number recognition
 * Asynchronized serial communication
 
-## Get Started
-
-TODO
-
 ## Prerequisites
+
+* [Daheng Galaxy USB3.0 driver](./docs/cam_driver_install.md)
 
 * OpenCV (Tested with 3.4.14)
 
@@ -21,7 +19,7 @@ TODO
   sudo apt install libboost-all-dev
   ```
 
-## Build
+## Build the project
 
 ```shell
 mkdir build
@@ -31,6 +29,13 @@ make
 ```
 
 After the building process is done, the generated executables will be put in `bin/` and static libraries will be put in `lib/`.
+
+## Get Started
+
+* [Acquire camera image](./docs/acquire_cam_image.md)
+* Camera calibration (TODO)
+* Run detection algorithm (TODO)
+* Communication with STM32 board via serial (TODO)
 
 ## Framework
 
