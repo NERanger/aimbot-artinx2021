@@ -33,7 +33,7 @@ After the building process is done, the generated executables will be put in `bi
 ## Get Started
 
 * [Acquire camera image](./docs/acquire_cam_image.md)
-* Camera calibration (TODO)
+* [Camera calibration](./docs/camera_calibration.md)
 * Run detection algorithm (TODO)
 * Communication with STM32 board via serial (TODO)
 
