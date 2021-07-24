@@ -11,7 +11,7 @@ Aimbot implementation for RM2021
 
 * [Daheng Galaxy USB3.0 driver](./docs/cam_driver_install.md)
 
-* OpenCV (Tested with 3.4.14)
+* [OpenCV (Tested with 3.4.14)](https://docs.opencv.org/3.4.14/d7/d9f/tutorial_linux_install.html)
 
 * Boost
 
@@ -35,11 +35,11 @@ After the building process is done, the generated executables will be put in `bi
 * [Acquire camera image](./docs/acquire_cam_image.md)
 * [Camera calibration](./docs/camera_calibration.md)
 * [Run detection algorithm](./docs/run_detection_algorithm.md)
-* Communication with STM32 board via serial (TODO)
+* [Communication with STM32 board via serial](./docs/serial_communication.md)
 
 ## Framework
 
-File tree:
+* File tree:
 
 ```text
 aimbot-artinx2021/
@@ -74,6 +74,7 @@ aimbot-artinx2021/
      |--utils/
 ```
 
-design concept:
+* Design concept:
 
-TODO
+  Every directory under `src/` will compile as a static library that provides certain function. When writing application code (such as those in `sample/`), you just link your code to the library according to the function you want. All project is organized with CMake, you may want to refer to [《CMake Cookbook》](https://github.com/xiaoweiChen/CMake-Cookbook/releases/download/0.2/CMake-CookBook.pdf) for CMake learning.
+
