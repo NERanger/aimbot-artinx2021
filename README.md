@@ -34,7 +34,7 @@ After the building process is done, the generated executables will be put in `bi
 
 * [Acquire camera image](./docs/acquire_cam_image.md)
 * [Camera calibration](./docs/camera_calibration.md)
-* Run detection algorithm (TODO)
+* [Run detection algorithm](./docs/run_detection_algorithm.md)
 * Communication with STM32 board via serial (TODO)
 
 ## Framework
